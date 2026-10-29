@@ -1,279 +1,274 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NEON REACTION | 반응속도 테스트</title>
-<style>
-:root {
-  --green: #39ff88;
-  --bg: #050807;
-  --panel: #0b1511;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  padding: 18px;
-  background: radial-gradient(ellipse at top, #10251a, var(--bg) 70%);
-  color: #eafff1;
-  font-family: Arial, sans-serif;
-}
-main { max-width: 900px; margin: auto; }
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  font-weight: bold;
-}
-.brand { font-size: 24px; letter-spacing: 2px; }
-.brand span { color: var(--green); }
-.hero { text-align: center; margin: 35px 0 25px; }
-.hero h1 { font-size: clamp(28px, 6vw, 46px); }
-.hero p { color: #91a69a; }
-.layout {
-  display: grid;
-  grid-template-columns: 1.6fr 0.8fr;
-  gap: 15px;
-}
-.panel {
-  padding: 16px;
-  background: var(--panel);
-  border: 1px solid #1d3a2b;
-  border-radius: 18px;
-}
-#arena {
-  min-height: 380px;
-  padding: 25px;
-  margin: 14px 0;
-  border: 2px solid #234633;
-  border-radius: 16px;
-  background: #0a1710;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-}
-#arena.waiting { background: #241018; border-color: #ff476f; }
-#arena.go {
-  background: #0b3b21;
-  border-color: var(--green);
-  box-shadow: 0 0 28px #39ff8844;
-}
-.big { font-size: clamp(30px, 7vw, 55px); font-weight: 900; }
-.sub { color: #a7b9ad; line-height: 1.7; }
-.controls { display: flex; gap: 10px; }
-button {
-  padding: 14px;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: bold;
-}
-.primary { flex: 1; background: var(--green); color: #031008; }
-.secondary { background: #132219; color: white; }
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
-.stat { padding: 12px; background: #09110c; border-radius: 10px; }
-.stat label { display: block; color: #91a69a; font-size: 12px; margin-bottom: 8px; }
-.stat strong { color: var(--green); font-size: 23px; }
-input {
-  width: 100%;
-  padding: 12px;
-  background: #050b07;
-  color: white;
-  border: 1px solid #1d3a2b;
-  border-radius: 8px;
-  margin-top: 8px;
-}
-.entry {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px;
-  margin-top: 8px;
-  background: #09110c;
-  border-radius: 8px;
-}
-.entry b { color: var(--green); }
-.note { color: #91a69a; font-size: 12px; line-height: 1.6; }
-@media(max-width:650px) {
-  body { padding: 10px; }
-  .layout { grid-template-columns: 1fr; }
-  #arena { min-height: 400px; }
-  .side { margin-top: 5px; }
-  .controls button { min-height: 52px; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valorant 360 Range Sim</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+        .hud-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .hud-item {
+            background: rgba(15, 23, 42, 0.6);
+            border-left: 4px solid #ff4655;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 0 4px 4px 0;
+            backdrop-filter: blur(4px);
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ffcc;
+        }
+        #crosshair::before { top: 4px; left: -2px; width: 14px; height: 2px; }
+        #crosshair::after { top: -2px; left: 4px; width: 2px; height: 14px; }
+        .menu-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 19, 29, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+        .menu-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .menu-title {
+            font-size: 48px;
+            font-weight: 900;
+            color: #ff4655;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255,70,85,0.4);
+        }
+        .menu-box {
+            background: #1f2326;
+            border: 1px solid #333;
+            padding: 30px;
+            border-radius: 8px;
+            width: 360px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .setting-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .setting-group label {
+            display: block;
+            font-size: 14px;
+            color: #a4a7ab;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="range"] {
+            flex: 1;
+            accent-color: #ff4655;
+        }
+        input[type="number"] {
+            width: 60px;
+            background: #111;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .btn-start {
+            background: #ff4655;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            text-transform: uppercase;
+            transition: background 0.2s;
+            border-radius: 4px;
+        }
+        .btn-start:hover {
+            background: #e03e4b;
+        }
+        #hit-notifier {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4655;
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            pointer-events: none;
+            opacity: 0;
+            transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+            text-shadow: 0 0 8px rgba(0,0,0,0.8);
+        }
+    </style>
+    <script src="https://cloudflare.com"></script>
 </head>
 <body>
-<main>
-<header>
-  <div class="brand">NEON <span>REACTION</span></div>
-  <div>REACTION LAB</div>
-</header>
-
-<section class="hero">
-  <h1>순간 반응속도 테스트</h1>
-  <p>초록색이 되는 순간 최대한 빠르게 눌러 봐!</p>
-</section>
-
-<div class="layout">
-<section class="panel">
-  <div id="status">READY TO START</div>
-  <div id="arena" role="button" tabindex="0">
-    <div class="big" id="message">준비됐어?</div>
-    <div class="sub" id="hint">시작을 누르고 초록색이 되면 클릭하거나 스페이스바!</div>
-  </div>
-  <div class="controls">
-    <button class="primary" id="start">테스트 시작</button>
-    <button class="secondary" id="reset">기록 초기화</button>
-  </div>
-  <div class="stats">
-    <div class="stat"><label>이번 기록</label><strong id="last">— ms</strong></div>
-    <div class="stat"><label>개인 최고 기록</label><strong id="best">— ms</strong></div>
-  </div>
-</section>
-
-<aside class="panel side">
-  <h3>🏆 내 기록</h3>
-  <label for="nickname">닉네임</label>
-  <input id="nickname" maxlength="16" placeholder="닉네임 입력">
-  <div id="history"></div>
-  <p class="note">기록은 이 기기에 저장돼. 온라인 랭킹은 별도 연결이 필요해.</p>
-</aside>
-</div>
-</main>
-
-<script>
-const arena = document.getElementById('arena');
-const message = document.getElementById('message');
-const hint = document.getElementById('hint');
-const statusText = document.getElementById('status');
-const startBtn = document.getElementById('start');
-const lastEl = document.getElementById('last');
-const bestEl = document.getElementById('best');
-const historyEl = document.getElementById('history');
-const nickname = document.getElementById('nickname');
-
-let state = 'idle';
-let timer;
-let startTime = 0;
-let records = [];
-
-try {
-  records = JSON.parse(localStorage.getItem('neonRecords') || '[]');
-} catch { records = []; }
-
-nickname.value = localStorage.getItem('neonNickname') || '';
-
-function render() {
-  historyEl.replaceChildren();
-  if (!records.length) {
-    historyEl.textContent = '아직 기록이 없어!';
-    bestEl.textContent = '— ms';
-    return;
-  }
-
-  bestEl.textContent = Math.min(...records.map(r => r.ms)) + ' ms';
-
-  records.slice(0, 5).forEach((r, i) => {
-    const row = document.createElement('div');
-    row.className = 'entry';
-    const name = document.createElement('span');
-    const score = document.createElement('b');
-    name.textContent = (i + 1) + '. ' + r.name;
-    score.textContent = r.ms + ' ms';
-    row.append(name, score);
-    historyEl.append(row);
-  });
-}
-
-function screen(cls, title, description, status) {
-  arena.className = cls;
-  message.textContent = title;
-  hint.textContent = description;
-  statusText.textContent = status;
-}
-
-function startGame() {
-  clearTimeout(timer);
-  state = 'waiting';
-  startBtn.disabled = true;
-  startBtn.textContent = '기다리는 중…';
-  screen('waiting', '기다려…', '초록색이 되기 전에는 누르지 마!', 'WAIT FOR GREEN');
-
-  timer = setTimeout(() => {
-    if (state !== 'waiting') return;
-    state = 'go';
-    startTime = performance.now();
-    screen('go', '지금 클릭!', '큰 영역을 클릭하거나 스페이스바를 눌러!', 'SIGNAL: GO');
-  }, 1200 + Math.random() * 3000);
-}
-
-function hit() {
-  if (state === 'waiting') {
-    clearTimeout(timer);
-    state = 'early';
-    screen('', '너무 빨라!', '초록색이 될 때까지 기다려야 해. 다시 도전!', 'FALSE START');
-    startBtn.disabled = false;
-    startBtn.textContent = '다시 도전';
-    return;
-  }
-
-  if (state !== 'go') return;
-
-  const ms = Math.round(performance.now() - startTime);
-  state = 'done';
-  records.unshift({
-    name: (nickname.value.trim() || '플레이어').slice(0, 16),
-    ms
-  });
-  records = records.slice(0, 20);
-
-  try {
-    localStorage.setItem('neonRecords', JSON.stringify(records));
-    localStorage.setItem('neonNickname', nickname.value);
-  } catch {}
-
-  lastEl.textContent = ms + ' ms';
-  screen('', ms + ' ms', '기록 완료! 한 번 더 도전해 봐.', 'RESULT SAVED');
-  startBtn.disabled = false;
-  startBtn.textContent = '다시 도전';
-  render();
-}
-
-startBtn.addEventListener('click', () => {
-  if (state !== 'waiting' && state !== 'go') startGame();
-});
-
-arena.addEventListener('click', () => {
-  if (state === 'waiting' || state === 'go') hit();
-});
-
-document.addEventListener('keydown', e => {
-  if (e.code !== 'Space' || document.activeElement === nickname) return;
-  e.preventDefault();
-  if (state === 'waiting' || state === 'go') hit();
-  else startGame();
-});
-
-document.getElementById('reset').addEventListener('click', () => {
-  if (!confirm('저장된 기록을 모두 지울까?')) return;
-  records = [];
-  localStorage.removeItem('neonRecords');
-  lastEl.textContent = '— ms';
-  screen('', '준비됐어?', '시작을 누르고 초록색이 되면 클릭하거나 스페이스바!', 'READY TO START');
-  startBtn.disabled = false;
-  startBtn.textContent = '테스트 시작';
-  render();
-});
-
-render();
-</script>
-</body>
-</html>
+    <div id="canvas-container"></div>
+    <div id="ui-layer">
+        <div class="hud-panel">
+            <div class="hud-item" id="hud-time">시간: 60s</div>
+            <div class="hud-item" id="hud-score">점수: 0</div>
+            <div class="hud-item" id="hud-hp">체력: 100</div>
+        </div>
+        <div id="crosshair"></div>
+        <div id="hit-notifier">HEADSHOT!</div>
+    </div>
+    <div id="start-screen" class="menu-screen">
+        <div class="menu-title">360° 사격장 훈련원</div>
+        <div class="menu-box" style="pointer-events: auto;">
+            <div class="setting-group">
+                <label>마우스 감도 (발로란트 1600 DPI 기준)</label>
+                <div class="control-row">
+                    <input type="range" id="sens-slider" min="0.01" max="1.5" step="0.01" value="0.1">
+                    <input type="number" id="sens-input" min="0.01" max="1.5" step="0.01" value="0.1">
+                </div>
+            </div>
+            <button class="btn-start" id="btn-play">훈련 시작</button>
+        </div>
+    </div>
+    <div id="gameover-screen" class="menu-screen hidden">
+        <div class="menu-title">훈련 종료</div>
+        <div class="menu-box" style="pointer-events: auto;">
+            <h2 style="margin-top:0; color:#fff;" id="final-score">최종 점수: 0</h2>
+            <button class="btn-start" id="btn-retry">다시 도전</button>
+        </div>
+    </div>
+    <script>
+        let scene, camera, renderer;
+        let isPlaying = false;
+        let score = 0;
+        let hp = 100;
+        let timeLeft = 60;
+        let gameTimer = null;
+        const VALORANT_YAW = 0.07 * (Math.PI / 180); 
+        let currentSens = 0.1;
+        let cameraPitch = 0;
+        let cameraYaw = 0;
+        let bots = [];
+        let particles = [];
+        const activeLasers = [];
+        const startScreen = document.getElementById('start-screen');
+        const gameoverScreen = document.getElementById('gameover-screen');
+        const sensSlider = document.getElementById('sens-slider');
+        const sensInput = document.getElementById('sens-input');
+        const hitNotifier = document.getElementById('hit-notifier');
+        function init() {
+            const container = document.getElementById('canvas-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0f1d);
+            scene.fog = new THREE.FogExp2(0x0a0f1d, 0.015);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.6, 0);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(20, 40, 20);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+            createEnvironment();
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mousedown', onStageClick);
+            setupSensitivityControls();
+        }
+        function setupSensitivityControls() {
+            sensSlider.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                sensInput.value = val;
+                currentSens = val;
+            });
+            sensInput.addEventListener('input', (e) => {
+                let val = parseFloat(e.target.value);
+                if(isNaN(val) || val < 0.01) val = 0.01;
+                if(val > 1.5) val = 1.5;
+                sensSlider.value = val;
+                currentSens = val;
+            });
+        }
+        function createEnvironment() {
+            const floorGeo = new THREE.CylinderGeometry(30, 30, 1, 64);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8, metalness: 0.2 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.position.y = -0.5;
+            floor.receiveShadow = true;
+            scene.add(floor);
+            const ringGeo = new THREE.RingGeometry(29.8, 30, 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xff4655, side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = 0.02;
+            scene.add(ring);
+            for(let r=10; r<=20; r+=5) {
+                const innerRingGeo = new THREE.RingGeometry(r - 0.1, r, 64);
+                const innerRingMat = new THREE.MeshBasicMaterial({ color: 0x475569, side: THREE.DoubleSide });
+                const innerRing = new THREE.Mesh(innerRingGeo, innerRingMat);
+                innerRing.rotation.x = Math.PI / 2;
+                innerRing.position.y = 0.01;
+                scene.add(innerRing);
+            }
+        }
+        function spawnHumanoidBot() {
+            const botGroup = new THREE.Group();
